@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Syne+Mono&display=swap');
+
+:root {
+  --pink: #ff2d78;
+  --cyan: #00e8ff;
+  --purple: #9d00ff;
+  --deep: #04040f;
+  --card: rgba(255, 255, 255, 0.03);
+  --card-b: rgba(255, 255, 255, 0.08);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth; /* Enables smooth scrolling when clicking nav links */
+}
+
+body {
+  background: var(--deep);
+  color: #eeeeff;
+  font-family: 'Rajdhani', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Glass Inputs */
+.glass-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  outline: none;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.glass-input:focus {
+  border-color: var(--pink);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 15px rgba(255, 45, 120, 0.2);
+}
+
+.glass-input::placeholder {
+  color: #6868a0;
+}
+
+/* Premium Buttons */
+.nav-cta {
+  background: linear-gradient(45deg, var(--pink), #ff719a);
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 45, 120, 0.4);
+}
+
+.nav-cta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 45, 120, 0.6);
+}
+
+.nav-cta.cyan-btn {
+  background: transparent;
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 4px 15px rgba(0, 232, 255, 0.2);
+}
+
+.nav-cta.cyan-btn:hover {
+  background: rgba(0, 232, 255, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 232, 255, 0.4);
+}
+
+.nav-cta:disabled {
+  background: #333;
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  border: none;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

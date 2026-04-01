@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Flame, Heart, Skull, Smile, Users, Smartphone, Zap, Database, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion'; // ADDED AnimatePresence
+import { Flame, Heart, Skull, Smile, Users, Smartphone, Zap, Database, ChevronDown, Loader2 } from 'lucide-react'; // ADDED Loader2
 import api from '../api';
 
 const Home = () => {
   const [username, setUsername] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [playType, setPlayType] = useState('online'); // NEW: Tracks Online vs Offline
+  const [playType, setPlayType] = useState('online'); 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const canvasRef = useRef(null);
 
   // Background Particle Animation (Fixed to background so it stays while scrolling)
   useEffect(() => {
+    // FIX: Clear out old database tokens so the new SQLite database doesn't crash!
+    localStorage.removeItem('token');
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     let w, h;
@@ -84,10 +87,12 @@ const Home = () => {
     setLoading(true);
     try {
       await authenticateUser();
-      const res = await api.post('/rooms/create', { name: `${username}'s Room`, mode: 'normal' });
+      // FIX: Explicitly pass the username so the backend knows who is hosting!
+      const res = await api.post('/rooms/create', { name: `${username}'s Room`, mode: 'normal', username: username });
       navigate(`/room/${res.data.roomCode}`);
     } catch (error) {
       console.error(error);
+      alert("Error creating room. Check the backend terminal!"); // Shows alert instead of silent fail
     }
     setLoading(false);
   };
@@ -97,7 +102,8 @@ const Home = () => {
     setLoading(true);
     try {
       await authenticateUser();
-      const res = await api.post('/rooms/join', { roomCode: roomCode.toUpperCase() });
+      // FIX: Explicitly pass the username
+      const res = await api.post('/rooms/join', { roomCode: roomCode.toUpperCase(), username: username });
       navigate(`/room/${res.data.roomCode}`);
     } catch (error) {
       alert(error.response?.data?.message || "Could not join room.");
@@ -114,6 +120,16 @@ const Home = () => {
   return (
     <div style={{ position: 'relative', width: '100vw', overflowX: 'hidden' }}>
       
+      {/* ADDED: FULL SCREEN NEON LOADER */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(4,4,15,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(10px)' }}>
+            <Loader2 className="animate-spin" size={80} color="var(--pink)" />
+            <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", color: 'white', marginTop: '20px', letterSpacing: '4px', fontSize: '2rem' }}>PREPARING ARENA...</h2>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Fixed Background Canvas */}
       <canvas 
         ref={canvasRef} 
@@ -230,7 +246,7 @@ const Home = () => {
             <input type="text" className="glass-input" placeholder={playType === 'online' ? "Choose your Username" : "Enter Host Name"} value={username} onChange={(e) => setUsername(e.target.value)} />
             
             <button className="nav-cta" style={{ width: '100%', marginBottom: playType === 'online' ? '30px' : '0' }} onClick={handleCreateRoom} disabled={loading || !username}>
-              {loading ? 'LOADING...' : (playType === 'online' ? 'HOST A NEW GAME' : 'START LOCAL GAME')}
+              {playType === 'online' ? 'HOST A NEW GAME' : 'START LOCAL GAME'}
             </button>
 
             {/* ONLY SHOW JOIN BOX IF ONLINE IS SELECTED */}

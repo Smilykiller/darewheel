@@ -11,7 +11,7 @@ const app = express();
 
 // 1. OPEN THE EXPRESS GATE (Declared only once!)
 app.use(cors({ 
-    origin: '*', 
+    origin: 'https://darewheel-game.onrender.com', // MUST be your exact frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE'], 
     credentials: true 
 }));
@@ -23,11 +23,11 @@ const server = http.createServer(app);
 // 2. OPEN THE SOCKET.IO GATE (Declared only once!)
 const io = new Server(server, {
     cors: { 
-        origin: '*', 
-        methods: ['GET', 'POST'] 
+        origin: 'https://darewheel-game.onrender.com', // MUST be your exact frontend URL
+        methods: ['GET', 'POST'],
+        credentials: true
     }
 });
-
 // Database Connection
 getDB().then(() => console.log('✅ Connected to SQLite locally!')).catch(console.error);
 

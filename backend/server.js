@@ -48,7 +48,7 @@ const frontendBuildPath = path.join(__dirname, '../frontend/build');
 app.use(express.static(frontendBuildPath));
 
 // Catch-all route: If they ask for any link that isn't an API, give them the React app!
-app.get('*', (req, res) => {
+app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(frontendBuildPath, 'index.html'));
 });
 // ---------------------------------------------------------

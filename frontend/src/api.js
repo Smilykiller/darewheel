@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://darewheel-backend-xyz.onrender.com/api',
+  baseURL: 'https://darewheel.onrender.com/api',
 });
 
 // Automatically attach the user's token to every request

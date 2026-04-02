@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, Flame, Heart, Skull, Smile, Users, X } from 'lucide-react';
 import api from '../api';
+import socket from '../socket'; // Imports the live connection!
 
 const Room = () => {
   const { roomCode } = useParams();

@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const getDB = require('./db');
+const path = require('path');
 
 dotenv.config();
 
@@ -35,6 +36,25 @@ getDB().then(() => console.log('✅ Connected to SQLite locally!')).catch(consol
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/rooms', require('./routes/roomRoutes'));
 app.use('/api/questions', require('./routes/questionRoutes'));
+// ...
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/rooms', require('./routes/roomRoutes'));
+app.use('/api/questions', require('./routes/questionRoutes'));
+
+// ---------------------------------------------------------
+// NEW MONOLITHIC CODE: Serve the React Frontend
+// ---------------------------------------------------------
+const frontendBuildPath = path.join(__dirname, '../frontend/build');
+app.use(express.static(frontendBuildPath));
+
+// Catch-all route: If they ask for any link that isn't an API, give them the React app!
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+});
+// ---------------------------------------------------------
+
+require('./sockets/gameSocket')(io);
+
 
 // Game Sockets
 require('./sockets/gameSocket')(io);

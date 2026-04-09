@@ -1,3 +1,6 @@
+// This acts as the backend's memory so it knows exactly who is in which room!
+const activeRooms = {}; 
+
 const setupSockets = (io) => {
     io.on('connection', (socket) => {
         console.log(`🔌 Player connected: ${socket.id}`);
@@ -7,8 +10,22 @@ const setupSockets = (io) => {
             socket.join(roomCode);
             console.log(`${username} joined room: ${roomCode}`);
             
-            // Tell everyone else in the room that someone new joined
-            socket.to(roomCode).emit('player_joined', { username, socketId: socket.id });
+            // If this room doesn't exist in memory yet, create it
+            if (!activeRooms[roomCode]) {
+                activeRooms[roomCode] = [];
+            }
+
+            // Create the official player object
+            const newPlayer = { id: socket.id, username: username };
+            
+            // Add the player to the room's memory
+            activeRooms[roomCode].push(newPlayer);
+
+            // A. Tell the person who JUST joined who is already sitting in the room
+            socket.emit('room_data', activeRooms[roomCode]);
+
+            // B. Tell everyone ELSE in the room that someone new joined
+            socket.to(roomCode).emit('player_joined', newPlayer);
         });
 
         // 2. THE BOTTLE SPIN SYNC
@@ -18,6 +35,7 @@ const setupSockets = (io) => {
             // so their screens animate the bottle identically
             socket.to(roomCode).emit('bottle_is_spinning', { velocity, angle });
         });
+
         // 5. Start the Game
         socket.on('start_game', ({ roomCode, mode }) => {
             // Broadcast to the whole room to change screens
@@ -30,10 +48,30 @@ const setupSockets = (io) => {
             io.to(roomCode).emit('turn_assigned', { selectedPlayerId });
         });
 
-        // 4. Handle Disconnects
+        // 4. Handle Disconnects (Now completely functional!)
         socket.on('disconnect', () => {
             console.log(`👋 Player disconnected: ${socket.id}`);
-            // Note: In production, you'd find which room they were in and emit a 'player_left' event
+            
+            // Search all active rooms to find the player who left
+            for (const roomCode in activeRooms) {
+                const roomPlayers = activeRooms[roomCode];
+                const playerIndex = roomPlayers.findIndex(p => p.id === socket.id);
+                
+                // If we found the player in this room...
+                if (playerIndex !== -1) {
+                    // 1. Remove them from the server memory
+                    roomPlayers.splice(playerIndex, 1);
+                    
+                    // 2. Tell the remaining players to remove them from the UI
+                    io.to(roomCode).emit('player_left', socket.id);
+                    
+                    // 3. Optional cleanup: If the room is now empty, delete it from memory entirely
+                    if (roomPlayers.length === 0) {
+                        delete activeRooms[roomCode];
+                    }
+                    break; // Stop searching once we found them
+                }
+            }
         });
     });
 };

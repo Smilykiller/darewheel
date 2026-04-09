@@ -1,10 +1,11 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Form } from 'react-router-dom';
 
 // Import our screens
-import Home from './Home';
-import OnlineRoom from './OnlineRoom';
-import OfflineGame from './OfflineGame';
+import Home from './pages/Home';
+import OnlineRoom from './pages/OnlineRoom';
+import OfflineGame from './pages/OfflineGame';
+import { Home } from 'lucide-react';
 // import OfflineGame from './OfflineGame'; // We will build/connect this next!
 
 function App() {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion'; // ADDED AnimatePresence
-import { Flame, Heart, Skull, Smile, Users, Smartphone, Zap, Database, ChevronDown, Loader2 } from 'lucide-react'; // ADDED Loader2
+import { motion, AnimatePresence } from 'framer-motion';
+import { Flame, Heart, Skull, Smile, Users, Smartphone, Zap, Database, ChevronDown, Loader2 } from 'lucide-react';
 import api from '../api';
 
 const Home = () => {
@@ -63,7 +63,7 @@ const Home = () => {
     };
   }, []);
 
-  // Backend Authentication & Room Logic
+  // Backend Authentication
   const authenticateUser = async () => {
     if (!username) return alert("Please enter a username!");
     try {
@@ -83,16 +83,27 @@ const Home = () => {
     }
   };
 
+  // --------------------------------------------------------
+  // ENGINE 1: OFFLINE MODE (Bypasses Backend)
+  // --------------------------------------------------------
+  const handleOfflineMode = () => {
+    // Jump straight to the offline engine
+    navigate('/offline');
+  };
+
+  // --------------------------------------------------------
+  // ENGINE 2: ONLINE MODE (Uses Backend & WebSockets)
+  // --------------------------------------------------------
   const handleCreateRoom = async () => {
     setLoading(true);
     try {
       await authenticateUser();
-      // FIX: Explicitly pass the username so the backend knows who is hosting!
       const res = await api.post('/rooms/create', { name: `${username}'s Room`, mode: 'normal', username: username });
-      navigate(`/room/${res.data.roomCode}`);
+      // NEW ROUTE: Teleport to the Online Room with the username state
+      navigate(`/online/${res.data.roomCode}`, { state: { username } });
     } catch (error) {
       console.error(error);
-      alert("Error creating room. Check the backend terminal!"); // Shows alert instead of silent fail
+      alert("Error creating room. Check the backend terminal!");
     }
     setLoading(false);
   };
@@ -102,9 +113,9 @@ const Home = () => {
     setLoading(true);
     try {
       await authenticateUser();
-      // FIX: Explicitly pass the username
       const res = await api.post('/rooms/join', { roomCode: roomCode.toUpperCase(), username: username });
-      navigate(`/room/${res.data.roomCode}`);
+      // NEW ROUTE: Teleport to the Online Room with the username state
+      navigate(`/online/${res.data.roomCode}`, { state: { username } });
     } catch (error) {
       alert(error.response?.data?.message || "Could not join room.");
     }
@@ -120,7 +131,7 @@ const Home = () => {
   return (
     <div style={{ position: 'relative', width: '100vw', overflowX: 'hidden' }}>
       
-      {/* ADDED: FULL SCREEN NEON LOADER */}
+      {/* FULL SCREEN NEON LOADER */}
       <AnimatePresence>
         {loading && (
           <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(4,4,15,0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(10px)' }}>
@@ -245,7 +256,8 @@ const Home = () => {
 
             <input type="text" className="glass-input" placeholder={playType === 'online' ? "Choose your Username" : "Enter Host Name"} value={username} onChange={(e) => setUsername(e.target.value)} />
             
-            <button className="nav-cta" style={{ width: '100%', marginBottom: playType === 'online' ? '30px' : '0' }} onClick={handleCreateRoom} disabled={loading || !username}>
+            {/* NEW ROUTING LOGIC: Uses handleCreateRoom for Online, handleOfflineMode for Offline */}
+            <button className="nav-cta" style={{ width: '100%', marginBottom: playType === 'online' ? '30px' : '0' }} onClick={playType === 'online' ? handleCreateRoom : handleOfflineMode} disabled={loading || !username}>
               {playType === 'online' ? 'HOST A NEW GAME' : 'START LOCAL GAME'}
             </button>
 

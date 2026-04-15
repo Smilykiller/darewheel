@@ -26,6 +26,14 @@ const setupSockets = (io) => {
 
             // B. Tell everyone ELSE in the room that someone new joined
             socket.to(roomCode).emit('player_joined', newPlayer);
+            // --- THE UNIVERSAL CHAT ENGINE ---
+socket.on('send_message', (messageData) => {
+    // messageData will contain: roomCode, username, text, mediaUrl, mediaType
+    
+    // Broadcast the message to EVERYONE in the room, including the sender
+    io.to(messageData.roomCode).emit('receive_message', messageData);
+});
+        
         });
 
         // 2. THE BOTTLE SPIN SYNC

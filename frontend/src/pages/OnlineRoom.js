@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, Copy, ArrowLeft } from 'lucide-react';
 import socket from '../socket';
+import ChatBox from '../components/ChatBox';
 
 const OnlineRoom = () => {
   const { roomCode } = useParams();
@@ -119,6 +120,7 @@ const OnlineRoom = () => {
           {players.length < 2 ? 'Waiting for players...' : 'Start Game'}
         </button>
       </motion.div>
+      <ChatBox roomCode={roomCode} username={myUsername} />
     </div>
   );
 };

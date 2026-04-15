@@ -35,6 +35,12 @@ socket.on('send_message', (messageData) => {
 });
         
         });
+        // --- THE UNIVERSAL CHAT ENGINE ---
+        // Catch messages from one player and broadcast them to everyone else in that room
+        socket.on('send_message', (messageData) => {
+            // io.to() sends it to everyone in the room, INCLUDING the sender
+            io.to(messageData.roomCode).emit('receive_message', messageData);
+        });
 
         // 2. THE BOTTLE SPIN SYNC
         // When a player swipes the bottle on their screen, they send the velocity/force here

@@ -38,6 +38,26 @@ const OnlineRoom = () => {
     socket.on('player_left', (disconnectedId) => {
       setPlayers((prev) => prev.filter(p => p.id !== disconnectedId));
     });
+    // 5. Listen for the host starting the game
+    socket.on('game_started', ({ mode }) => {
+      // Teleport everyone to the game board, carrying their data with them!
+      navigate(`/game/${roomCode}`, { 
+        state: { 
+          username: myUsername, 
+          players: players, // Pass the finalized player list
+          category: mode 
+        } 
+      });
+    });
+
+    return () => {
+      socket.off('room_data');
+      socket.off('player_joined');
+      socket.off('player_left');
+      socket.off('game_started'); // Don't forget to clean this up!
+    };
+  }, [roomCode, myUsername, navigate, players]); 
+  // Make sure 'navigate' and 'players' are in your dependency array!
 
     return () => {
       socket.off('room_data');
@@ -51,6 +71,20 @@ const OnlineRoom = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  // Add this function right above your return() statement
+  const handleStartGame = () => {
+    // Tell the backend to broadcast the start command to this specific room
+    socket.emit('start_game', { roomCode, mode: 'Normal' }); 
+  };
+
+  // ... down in your JSX, update the button:
+  <button 
+    onClick={handleStartGame}
+    disabled={players.length < 2}
+    className="w-full bg-zentry-copper text-black font-black py-4 rounded-xl tracking-widest uppercase disabled:opacity-30 transition-all hover:bg-white"
+  >
+    {players.length < 2 ? 'Waiting for players...' : 'Start Game'}
+  </button>
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center pt-20 px-6 relative overflow-hidden">

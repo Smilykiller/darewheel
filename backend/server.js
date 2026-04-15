@@ -9,7 +9,12 @@ const path = require('path');
 dotenv.config();
 
 const app = express();
-
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({ 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY, 
+  api_secret: process.env.CLOUDINARY_API_SECRET 
+});
 // 1. OPEN THE EXPRESS GATE (Declared only once!)
 app.use(cors({ 
     origin: 'https://darewheel-game.onrender.com', // MUST be your exact frontend URL

@@ -101,6 +101,7 @@ const ChatBox = ({ roomCode, username }) => {
         username,
         text: resourceType === 'video' ? "🎥 Uploaded Video Proof" : "📸 Uploaded Photo Proof",
         mediaUrl: data.secure_url, 
+        publicId: data.public_id, // <--- NEW: Added this so the backend can delete it later!
         mediaType: resourceType,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };

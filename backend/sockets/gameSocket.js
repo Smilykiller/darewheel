@@ -1,89 +1,69 @@
-// This acts as the backend's memory so it knows exactly who is in which room!
+const cloudinary = require('cloudinary').v2; // Import Cloudinary
+
+// Memory Structure: { "ROOM123": { players: [], mediaIds: [] } }
 const activeRooms = {}; 
 
 const setupSockets = (io) => {
     io.on('connection', (socket) => {
         console.log(`🔌 Player connected: ${socket.id}`);
 
-        // 1. Join a specific game room channel
         socket.on('join_room', (roomCode, username) => {
             socket.join(roomCode);
-            console.log(`${username} joined room: ${roomCode}`);
             
-            // If this room doesn't exist in memory yet, create it
+            // Create room structure if it doesn't exist
             if (!activeRooms[roomCode]) {
-                activeRooms[roomCode] = [];
+                activeRooms[roomCode] = { players: [], mediaIds: [] };
             }
 
-            // Create the official player object
             const newPlayer = { id: socket.id, username: username };
-            
-            // Add the player to the room's memory
-            activeRooms[roomCode].push(newPlayer);
+            activeRooms[roomCode].players.push(newPlayer);
 
-            // A. Tell the person who JUST joined who is already sitting in the room
-            socket.emit('room_data', activeRooms[roomCode]);
-
-            // B. Tell everyone ELSE in the room that someone new joined
+            socket.emit('room_data', activeRooms[roomCode].players);
             socket.to(roomCode).emit('player_joined', newPlayer);
-            // --- THE UNIVERSAL CHAT ENGINE ---
-socket.on('send_message', (messageData) => {
-    // messageData will contain: roomCode, username, text, mediaUrl, mediaType
-    
-    // Broadcast the message to EVERYONE in the room, including the sender
-    io.to(messageData.roomCode).emit('receive_message', messageData);
-});
-        
         });
-        // --- THE UNIVERSAL CHAT ENGINE ---
-        // Catch messages from one player and broadcast them to everyone else in that room
+
+        // --- NEW: THE UNIVERSAL CHAT ENGINE ---
         socket.on('send_message', (messageData) => {
-            // io.to() sends it to everyone in the room, INCLUDING the sender
+            // If the message has media, save the Cloudinary Public ID to the room's memory
+            if (messageData.publicId) {
+                if (activeRooms[messageData.roomCode]) {
+                    activeRooms[messageData.roomCode].mediaIds.push(messageData.publicId);
+                    console.log(`📝 Tracked media ${messageData.publicId} for room ${messageData.roomCode}`);
+                }
+            }
+            // Broadcast to the room
             io.to(messageData.roomCode).emit('receive_message', messageData);
         });
 
-        // 2. THE BOTTLE SPIN SYNC
-        // When a player swipes the bottle on their screen, they send the velocity/force here
-        socket.on('spin_bottle', ({ roomCode, velocity, angle }) => {
-            // Broadcast the exact swipe math to ALL OTHER PLAYERS in the room instantly
-            // so their screens animate the bottle identically
-            socket.to(roomCode).emit('bottle_is_spinning', { velocity, angle });
-        });
-
-        // 5. Start the Game
-        socket.on('start_game', ({ roomCode, mode }) => {
-            // Broadcast to the whole room to change screens
-            socket.to(roomCode).emit('game_started', { mode });
-        });
-
-        // 3. When the bottle finishes spinning
-        socket.on('bottle_stopped', ({ roomCode, selectedPlayerId }) => {
-            // The backend confirms who it landed on and tells the whole room
-            io.to(roomCode).emit('turn_assigned', { selectedPlayerId });
-        });
-
-        // 4. Handle Disconnects (Now completely functional!)
-        socket.on('disconnect', () => {
+        // --- ROOM CLEANUP LOGIC ---
+        socket.on('disconnect', async () => {
             console.log(`👋 Player disconnected: ${socket.id}`);
             
-            // Search all active rooms to find the player who left
             for (const roomCode in activeRooms) {
-                const roomPlayers = activeRooms[roomCode];
-                const playerIndex = roomPlayers.findIndex(p => p.id === socket.id);
+                const room = activeRooms[roomCode];
+                const playerIndex = room.players.findIndex(p => p.id === socket.id);
                 
-                // If we found the player in this room...
                 if (playerIndex !== -1) {
-                    // 1. Remove them from the server memory
-                    roomPlayers.splice(playerIndex, 1);
-                    
-                    // 2. Tell the remaining players to remove them from the UI
+                    room.players.splice(playerIndex, 1);
                     io.to(roomCode).emit('player_left', socket.id);
                     
-                    // 3. Optional cleanup: If the room is now empty, delete it from memory entirely
-                    if (roomPlayers.length === 0) {
+                    // IF THE ROOM IS NOW EMPTY -> INITIATE SELF-DESTRUCT
+                    if (room.players.length === 0) {
+                        console.log(`🧹 Room ${roomCode} is empty. Commencing cleanup...`);
+                        
+                        if (room.mediaIds.length > 0) {
+                            try {
+                                // Tell Cloudinary to delete the tracked files
+                                await cloudinary.api.delete_resources(room.mediaIds);
+                                console.log(`✅ Deleted ${room.mediaIds.length} media files for room ${roomCode}`);
+                            } catch (error) {
+                                console.error(`❌ Failed to delete media for room ${roomCode}:`, error);
+                            }
+                        }
+                        // Delete the room from server memory
                         delete activeRooms[roomCode];
                     }
-                    break; // Stop searching once we found them
+                    break; 
                 }
             }
         });

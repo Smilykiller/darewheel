@@ -5,7 +5,6 @@ import { BrowserRouter as Router, Routes, Route, Form } from 'react-router-dom';
 import Home from './pages/Home';
 import OnlineRoom from './pages/OnlineRoom';
 import OfflineGame from './pages/OfflineGame';
-import { Home } from 'lucide-react';
 // import OfflineGame from './OfflineGame'; // We will build/connect this next!
 
 function App() {

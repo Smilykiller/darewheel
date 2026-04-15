@@ -254,10 +254,13 @@ const Home = () => {
               </button>
             </div>
 
-            <input type="text" className="glass-input" placeholder={playType === 'online' ? "Choose your Username" : "Enter Host Name"} value={username} onChange={(e) => setUsername(e.target.value)} />
+            {/* ONLY SHOW USERNAME INPUT IF ONLINE IS SELECTED */}
+            {playType === 'online' && (
+              <input type="text" className="glass-input" placeholder="Choose your Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            )}
             
-            {/* NEW ROUTING LOGIC: Uses handleCreateRoom for Online, handleOfflineMode for Offline */}
-            <button className="nav-cta" style={{ width: '100%', marginBottom: playType === 'online' ? '30px' : '0' }} onClick={playType === 'online' ? handleCreateRoom : handleOfflineMode} disabled={loading || !username}>
+            {/* NEW ROUTING LOGIC: Uses handleCreateRoom for Online, handleOfflineMode for Offline. Disable logic adjusted. */}
+            <button className="nav-cta" style={{ width: '100%', marginBottom: playType === 'online' ? '30px' : '0' }} onClick={playType === 'online' ? handleCreateRoom : handleOfflineMode} disabled={loading || (playType === 'online' && !username)}>
               {playType === 'online' ? 'HOST A NEW GAME' : 'START LOCAL GAME'}
             </button>
 

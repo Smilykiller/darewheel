@@ -34,6 +34,12 @@ const setupSockets = (io) => {
             // Broadcast to the room
             io.to(messageData.roomCode).emit('receive_message', messageData);
         });
+        // --- GAME STATE COMMANDS ---
+        socket.on('start_game', ({ roomCode, mode }) => {
+            console.log(`🚀 Game started in room ${roomCode} with mode: ${mode}`);
+            // Broadcast the start command to everyone in the room
+            io.to(roomCode).emit('game_started', { mode });
+        });
 
         // --- ROOM CLEANUP LOGIC ---
         socket.on('disconnect', async () => {

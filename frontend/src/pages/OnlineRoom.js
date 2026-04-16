@@ -20,7 +20,6 @@ const OnlineRoom = () => {
 
     // 2. Receive the list of players
     socket.on('room_data', (currentPlayers) => {
-      // FIX: Deduplicate the array in case React Strict Mode fired twice
       const uniquePlayers = Array.from(new Map(currentPlayers.map(item => [item.username, item])).values());
       setPlayers(uniquePlayers);
     });
@@ -28,7 +27,6 @@ const OnlineRoom = () => {
     // 3. Listen for new players
     socket.on('player_joined', (newPlayer) => {
       setPlayers((prev) => {
-        // FIX: Prevent adding someone if they are already in the list
         if (prev.some(p => p.username === newPlayer.username)) return prev;
         return [...prev, newPlayer];
       });
@@ -38,13 +36,13 @@ const OnlineRoom = () => {
     socket.on('player_left', (disconnectedId) => {
       setPlayers((prev) => prev.filter(p => p.id !== disconnectedId));
     });
+
     // 5. Listen for the host starting the game
     socket.on('game_started', ({ mode }) => {
-      // Teleport everyone to the game board, carrying their data with them!
       navigate(`/game/${roomCode}`, { 
         state: { 
           username: myUsername, 
-          players: players, // Pass the finalized player list
+          players: players, 
           category: mode 
         } 
       });
@@ -54,37 +52,19 @@ const OnlineRoom = () => {
       socket.off('room_data');
       socket.off('player_joined');
       socket.off('player_left');
-      socket.off('game_started'); // Don't forget to clean this up!
+      socket.off('game_started');
     };
   }, [roomCode, myUsername, navigate, players]); 
-  // Make sure 'navigate' and 'players' are in your dependency array!
-
-    return () => {
-      socket.off('room_data');
-      socket.off('player_joined');
-      socket.off('player_left');
-    };
-  }, [roomCode, myUsername]);
 
   const copyRoomCode = () => {
     navigator.clipboard.writeText(roomCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  // Add this function right above your return() statement
+
   const handleStartGame = () => {
-    // Tell the backend to broadcast the start command to this specific room
     socket.emit('start_game', { roomCode, mode: 'Normal' }); 
   };
-
-  // ... down in your JSX, update the button:
-  <button 
-    onClick={handleStartGame}
-    disabled={players.length < 2}
-    className="w-full bg-zentry-copper text-black font-black py-4 rounded-xl tracking-widest uppercase disabled:opacity-30 transition-all hover:bg-white"
-  >
-    {players.length < 2 ? 'Waiting for players...' : 'Start Game'}
-  </button>
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center pt-20 px-6 relative overflow-hidden">
@@ -148,6 +128,7 @@ const OnlineRoom = () => {
         </ul>
 
         <button 
+          onClick={handleStartGame}
           disabled={players.length < 2}
           className="w-full bg-zentry-copper text-black font-black py-4 rounded-xl tracking-widest uppercase disabled:opacity-30 transition-all hover:bg-white"
         >
